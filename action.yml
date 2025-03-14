@@ -1,0 +1,176 @@
+name: 'ci-cache-cmake-build'
+description: 'Restore cached CMake build directory (populated separately) and optimize rebuilds by selectively updating timestamps'
+
+inputs:
+  source-dir:
+    description: 'Source code directory'
+    required: false
+    default: '.'
+  build-dir:
+    description: 'CMake build directory'
+    required: false
+    default: 'build'
+  cache-key-prefix:
+    description: 'Cache key prefix'
+    required: false
+    default: 'cmake-build-cache'
+  build-args:
+    description: 'Additional build arguments (passed to build tool like make or ninja)'
+    required: false
+    default: ''
+  force-reconfigure:
+    description: 'Force CMake reconfiguration even if cache exists'
+    required: false
+    default: 'false'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get develop branch ref
+      id: get-develop-ref
+      shell: bash
+      run: |
+        echo "Getting develop branch ref..."
+        # Fetch develop branch info without checking it out
+        git fetch origin develop --depth=1 || echo "Develop branch not found, using default cache key"
+        
+        # Get develop HEAD commit hash, fallback to a default if develop doesn't exist
+        if git rev-parse origin/develop &>/dev/null; then
+          DEVELOP_SHA=$(git rev-parse origin/develop)
+          echo "Found develop branch HEAD: $DEVELOP_SHA"
+        else
+          # If develop doesn't exist, use a fallback constant
+          DEVELOP_SHA="no-develop-branch"
+          echo "No develop branch found, using fallback cache key"
+        fi
+        
+        # Set the cache key based on develop's HEAD
+        echo "DEVELOP_SHA=$DEVELOP_SHA" >> $GITHUB_ENV
+        echo "CACHE_KEY=${{ inputs.cache-key-prefix }}-$DEVELOP_SHA" >> $GITHUB_ENV
+
+    - name: Create working directories
+      shell: bash
+      run: |
+        mkdir -p .cmake-smart-cache
+        mkdir -p ${{ inputs.build-dir }}
+
+    - name: Generate git-controlled file manifest
+      shell: bash
+      run: |
+        echo "Generating manifest of git-controlled files..."
+        
+        # Create a manifest file of all git-tracked files with their hashes
+        manifest_file=".cmake-smart-cache/current-manifest.txt"
+        > "$manifest_file"
+        
+        # Get all git-tracked files and calculate their hashes
+        git ls-files | while read -r file; do
+          # Skip files in the build directory
+          if [[ "$file" != "${{ inputs.build-dir }}/"* && -f "$file" ]]; then
+            # Calculate file hash
+            file_hash=$(git hash-object "$file")
+            # Store in manifest with pipe separator
+            echo "$file|$file_hash" >> "$manifest_file"
+          fi
+        done
+        
+        # Sort manifest for consistent comparison
+        sort -o "$manifest_file" "$manifest_file"
+        echo "Created source manifest with $(wc -l < "$manifest_file") git-controlled files"
+
+    - name: Restore build cache
+      id: restore-cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ inputs.build-dir }}
+          .cmake-smart-cache/previous-manifest.txt
+        key: ${{ env.CACHE_KEY }}
+        # No restore-keys since we want exactly the develop branch cache
+
+    - name: Process file changes and update timestamps
+      shell: bash
+      run: |
+        # Determine if we need to configure CMake from scratch
+        need_configure="false"
+        
+        if [ "${{ steps.restore-cache.outputs.cache-hit }}" != "true" ]; then
+          echo "No cache hit, will configure CMake from scratch"
+          need_configure="true"
+        elif [ ! -f "${{ inputs.build-dir }}/CMakeCache.txt" ]; then
+          echo "CMakeCache.txt not found, will configure from scratch"
+          need_configure="true"
+        elif [ "${{ inputs.force-reconfigure }}" == "true" ]; then
+          echo "Force reconfigure requested"
+          need_configure="true"
+        fi
+        
+        echo "NEED_CONFIGURE=$need_configure" >> $GITHUB_ENV
+        
+        # If we have a cache hit, process file changes to optimize rebuilds
+        if [ "${{ steps.restore-cache.outputs.cache-hit }}" == "true" ]; then
+          echo "Cache hit from develop branch. Processing file changes to optimize rebuilds..."
+          
+          # Create empty previous manifest if it doesn't exist
+          prev_manifest=".cmake-smart-cache/previous-manifest.txt"
+          if [ ! -f "$prev_manifest" ]; then
+            touch "$prev_manifest"
+            echo "No previous manifest found, treating all files as changed"
+          fi
+          
+          # Find changed or new files and update their timestamps
+          curr_manifest=".cmake-smart-cache/current-manifest.txt"
+          changed_count=0
+          while IFS='|' read -r file hash; do
+            # Check if file exists with same hash in previous manifest
+            if ! grep -q "^$file|$hash$" "$prev_manifest"; then
+              if [ -f "$file" ]; then
+                # Update file's modification time to trigger rebuild
+                touch -m "$file"
+                changed_count=$((changed_count + 1))
+                
+                echo "Updated timestamp: $file"
+              fi
+            fi
+          done < "$curr_manifest"
+          
+          # Find deleted files and touch their parent directories
+          deleted_count=0
+          while IFS='|' read -r file hash; do
+            # Check if file is missing from current manifest
+            if ! grep -q "^$file|" "$curr_manifest"; then
+              # File was removed, touch parent directory
+              dir_path="$(dirname "$file")"
+              if [ -d "$dir_path" ]; then
+                touch -m "$dir_path"
+                deleted_count=$((deleted_count + 1))
+                
+                # Limit logging output
+                if [ $deleted_count -le 5 ]; then
+                  echo "File removed: $file (touched directory)"
+                elif [ $deleted_count -eq 6 ]; then
+                  echo "More files removed (limiting output)"
+                fi
+              fi
+            fi
+          done < "$prev_manifest"
+          
+          echo "Processed $changed_count changed/new files and $deleted_count removed files"
+        else
+          echo "No cache hit from develop branch"
+        fi
+
+    - name: Report cache miss
+      if: steps.restore-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "::warning::No cache hit found for develop branch (${{ env.DEVELOP_SHA }})"
+
+    - name: Build with CMake
+      shell: bash
+      run: |
+        echo "Building with CMake using restored cache..."
+        # Use the specified build arguments or default to empty
+        build_args="${{ inputs.build-args }}"
+        cmake --build ${{ inputs.build-dir }} $build_args
+        echo "Build completed successfully"
