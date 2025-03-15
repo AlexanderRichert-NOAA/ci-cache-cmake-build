@@ -61,7 +61,7 @@ runs:
         echo "Generating manifest of git-controlled files..."
         
         # Create a manifest file of all git-tracked files with their hashes
-        manifest_file=".cmake-smart-cache/current-manifest.txt"
+        manifest_file="${GITHUB_WORKSPACE}/.cmake-smart-cache/current-manifest.txt"
         > "$manifest_file"
 
         # Get all git-tracked files and calculate their hashes
