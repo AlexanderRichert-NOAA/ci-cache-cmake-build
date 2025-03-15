@@ -63,8 +63,9 @@ runs:
         # Create a manifest file of all git-tracked files with their hashes
         manifest_file=".cmake-smart-cache/current-manifest.txt"
         > "$manifest_file"
-        
+
         # Get all git-tracked files and calculate their hashes
+        cd ${{ inputs.source-dir }}
         git ls-files | while read -r file; do
           # Skip files in the build directory
           if [[ "$file" != "${{ inputs.build-dir }}/"* && -f "$file" ]]; then
