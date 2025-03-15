@@ -40,7 +40,7 @@ runs:
       run: |
         echo "Getting reference branch ref..."
         cd ${{ inputs.source-dir }}
-        git remote add reference https://github.com/${{ inputs.parent-org }}/${{ ${{ github.event.repository.name }}
+        git remote add reference https://github.com/${{ inputs.parent-org }}/${{ github.event.repository.name }}
         # Fetch reference branch info without checking it out
         git fetch reference ${{ inputs.reference-branch }} --depth=1 || echo "Develop branch not found, using default cache key"
         
