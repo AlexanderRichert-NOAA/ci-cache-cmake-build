@@ -110,10 +110,10 @@ runs:
         if [ "${{ steps.restore-cache.outputs.cache-hit }}" == "true" ]; then
           echo "Cache hit from reference branch. Processing file changes to optimize rebuilds..."
 
-          reference_manifest="reference-manifest.txt"
+          reference_manifest="${GITHUB_WORKSPACE}/reference-manifest.txt"
           
           # Find changed or new files and update their timestamps
-          curr_manifest="current-manifest.txt"
+          curr_manifest="${GITHUB_WORKSPACE}/current-manifest.txt"
           changed_count=0
           while IFS='|' read -r file hash; do
             # Check if file exists with same hash in previous manifest
