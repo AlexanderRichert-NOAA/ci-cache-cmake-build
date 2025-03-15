@@ -82,7 +82,7 @@ runs:
 
     - name: Restore build cache
       id: restore-cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: |
           ${{ inputs.build-dir }}
