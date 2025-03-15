@@ -55,13 +55,12 @@ runs:
     - name: Create file manifest for modified code
       shell: bash
       run: |
-        mkdir -p .cmake-smart-cache
         mkdir -p ${{ inputs.build-dir }}
 
         echo "Generating manifest of git-controlled files..."
         
         # Create a manifest file of all git-tracked files with their hashes
-        manifest_file="${GITHUB_WORKSPACE}/.cmake-smart-cache/current-manifest.txt"
+        manifest_file="${GITHUB_WORKSPACE}/current-manifest.txt"
         > "$manifest_file"
 
         # Get all git-tracked files and calculate their hashes
@@ -86,7 +85,7 @@ runs:
       with:
         path: |
           ${{ inputs.build-dir }}
-          .cmake-smart-cache/reference-manifest.txt
+          reference-manifest.txt
         key: ${{ env.CACHE_KEY }}
         restore-keys: ${{ env.CACHE_KEY }}
 
@@ -111,10 +110,10 @@ runs:
         if [ "${{ steps.restore-cache.outputs.cache-hit }}" == "true" ]; then
           echo "Cache hit from reference branch. Processing file changes to optimize rebuilds..."
 
-          reference_manifest=".cmake-smart-cache/reference-manifest.txt"
+          reference_manifest="reference-manifest.txt"
           
           # Find changed or new files and update their timestamps
-          curr_manifest=".cmake-smart-cache/current-manifest.txt"
+          curr_manifest="current-manifest.txt"
           changed_count=0
           while IFS='|' read -r file hash; do
             # Check if file exists with same hash in previous manifest
