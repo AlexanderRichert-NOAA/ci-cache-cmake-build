@@ -22,41 +22,42 @@ inputs:
     description: 'Force CMake reconfiguration even if cache exists'
     required: false
     default: 'false'
+  parent-org:
+    description: 'GitHub org with reference repo/branch'
+    required: false
+    default: 'NOAA-EMC'
+  reference-branch:
+    description: 'Name of reference branch'
+    required: false
+    default: 'develop'
 
 runs:
   using: "composite"
   steps:
-    - name: Get develop branch ref
-      id: get-develop-ref
+    - name: Get reference branch ref
+      id: get-reference-ref
       shell: bash
       run: |
-        echo "Getting develop branch ref..."
-        # Fetch develop branch info without checking it out
-        git fetch origin develop --depth=1 || echo "Develop branch not found, using default cache key"
+        echo "Getting reference branch ref..."
+        cd ${{ inputs.source-dir }}
+        git remote add reference https://github.com/${{ inputs.parent-org }}/${{ ${{ github.event.repository.name }}
+        # Fetch reference branch info without checking it out
+        git fetch reference ${{ inputs.reference-branch }} --depth=1 || echo "Develop branch not found, using default cache key"
         
-        # Get develop HEAD commit hash, fallback to a default if develop doesn't exist
-        if git rev-parse origin/develop &>/dev/null; then
-          DEVELOP_SHA=$(git rev-parse origin/develop)
-          echo "Found develop branch HEAD: $DEVELOP_SHA"
-        else
-          # If develop doesn't exist, use a fallback constant
-          DEVELOP_SHA="no-develop-branch"
-          echo "No develop branch found, using fallback cache key"
-        fi
+        # Get reference HEAD commit hash
+        REFERENCE_SHA=$(git rev-parse reference/${{ inputs.reference-branch }})
+        echo "Found ${{ inputs.reference-branch }} branch HEAD: $REFERENCE_SHA"
         
-        # Set the cache key based on develop's HEAD
-        echo "DEVELOP_SHA=$DEVELOP_SHA" >> $GITHUB_ENV
-        echo "CACHE_KEY=${{ inputs.cache-key-prefix }}-$DEVELOP_SHA" >> $GITHUB_ENV
+        # Set the cache key based on reference branch's HEAD
+        echo "REFERENCE_SHA=$REFERENCE_SHA" >> $GITHUB_ENV
+        echo "CACHE_KEY=${{ inputs.cache-key-prefix }}-${{ inputs.parent-org }}-$REFERENCE_SHA" >> $GITHUB_ENV
 
-    - name: Create working directories
+    - name: Create file manifest for modified code
       shell: bash
       run: |
         mkdir -p .cmake-smart-cache
         mkdir -p ${{ inputs.build-dir }}
 
-    - name: Generate git-controlled file manifest
-      shell: bash
-      run: |
         echo "Generating manifest of git-controlled files..."
         
         # Create a manifest file of all git-tracked files with their hashes
@@ -80,13 +81,12 @@ runs:
 
     - name: Restore build cache
       id: restore-cache
-      uses: actions/cache@v3
+      uses: actions/cache/restore@v3
       with:
         path: |
           ${{ inputs.build-dir }}
-          .cmake-smart-cache/previous-manifest.txt
+          .cmake-smart-cache/reference-manifest.txt
         key: ${{ env.CACHE_KEY }}
-        # No restore-keys since we want exactly the develop branch cache
 
     - name: Process file changes and update timestamps
       shell: bash
@@ -105,25 +105,18 @@ runs:
           need_configure="true"
         fi
         
-        echo "NEED_CONFIGURE=$need_configure" >> $GITHUB_ENV
-        
         # If we have a cache hit, process file changes to optimize rebuilds
         if [ "${{ steps.restore-cache.outputs.cache-hit }}" == "true" ]; then
-          echo "Cache hit from develop branch. Processing file changes to optimize rebuilds..."
-          
-          # Create empty previous manifest if it doesn't exist
-          prev_manifest=".cmake-smart-cache/previous-manifest.txt"
-          if [ ! -f "$prev_manifest" ]; then
-            touch "$prev_manifest"
-            echo "No previous manifest found, treating all files as changed"
-          fi
+          echo "Cache hit from reference branch. Processing file changes to optimize rebuilds..."
+
+          reference_manifest=".cmake-smart-cache/reference-manifest.txt"
           
           # Find changed or new files and update their timestamps
           curr_manifest=".cmake-smart-cache/current-manifest.txt"
           changed_count=0
           while IFS='|' read -r file hash; do
             # Check if file exists with same hash in previous manifest
-            if ! grep -q "^$file|$hash$" "$prev_manifest"; then
+            if ! grep -q "^$file|$hash$" "$reference_manifest"; then
               if [ -f "$file" ]; then
                 # Update file's modification time to trigger rebuild
                 touch -m "$file"
@@ -145,26 +138,21 @@ runs:
                 touch -m "$dir_path"
                 deleted_count=$((deleted_count + 1))
                 
-                # Limit logging output
-                if [ $deleted_count -le 5 ]; then
-                  echo "File removed: $file (touched directory)"
-                elif [ $deleted_count -eq 6 ]; then
-                  echo "More files removed (limiting output)"
-                fi
+                echo "File removed: $file (touched directory)"
               fi
             fi
-          done < "$prev_manifest"
+          done < "$reference_manifest"
           
           echo "Processed $changed_count changed/new files and $deleted_count removed files"
         else
-          echo "No cache hit from develop branch"
+          echo "No cache hit from reference branch"
         fi
 
     - name: Report cache miss
       if: steps.restore-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        echo "::warning::No cache hit found for develop branch (${{ env.DEVELOP_SHA }})"
+        echo "::warning::No cache hit found for reference branch (${{ inputs.reference-branch }}/${{ env.REFERENCE_SHA }})"
 
     - name: Build with CMake
       shell: bash
