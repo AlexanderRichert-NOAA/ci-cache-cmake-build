@@ -88,6 +88,7 @@ runs:
           ${{ inputs.build-dir }}
           .cmake-smart-cache/reference-manifest.txt
         key: ${{ env.CACHE_KEY }}
+        restore-keys: ${{ env.CACHE_KEY }}
 
     - name: Process file changes and update timestamps
       shell: bash
