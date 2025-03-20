@@ -112,7 +112,7 @@ runs:
 
           reference_manifest="${GITHUB_WORKSPACE}/reference-manifest.txt"
 
-          find ${{ inputs.source-dir }} | xargs -I{} touch -t 0 {}
+          find ${{ inputs.source-dir }} | xargs -I{} touch -t 197001010000 {}
           # Find changed or new files and update their timestamps
           curr_manifest="${GITHUB_WORKSPACE}/current-manifest.txt"
           changed_count=0
