@@ -145,6 +145,7 @@ runs:
       run: |
         echo "Building with CMake using restored cache..."
         # Use the specified build arguments or default to empty
+        rm build/CMakeCache.txt
         build_args="${{ inputs.build-args }}"
         cmake -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }}
         cmake --build ${{ inputs.build-dir }} $build_args
