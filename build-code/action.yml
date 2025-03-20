@@ -146,6 +146,10 @@ runs:
           done < "$reference_manifest"
           
           echo "Processed $changed_count changed/new files and $deleted_count removed files"
+          echo "Current:"
+          cat $curr_manifest
+          echo "Reference:"
+          cat $reference_manifest
         else
           echo "No cache hit from reference branch"
         fi
