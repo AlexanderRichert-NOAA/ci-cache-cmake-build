@@ -119,9 +119,9 @@ runs:
           while IFS='|' read -r file hash; do
             # Check if file exists with same hash in previous manifest
             if ! grep -q "^$file|$hash$" "$reference_manifest"; then
-              if [ -f "$file" ]; then
+              if [ -f "${{ inputs.source-dir }}/$file" ]; then
                 # Update file's modification time to trigger rebuild
-                touch -m "$file"
+                touch -m "${{ inputs.source-dir }}/$file"
                 changed_count=$((changed_count + 1))
                 
                 echo "Updated timestamp: $file"
@@ -129,27 +129,7 @@ runs:
             fi
           done < "$curr_manifest"
           
-          # Find deleted files and touch their parent directories
-          deleted_count=0
-          while IFS='|' read -r file hash; do
-            # Check if file is missing from current manifest
-            if ! grep -q "^$file|" "$curr_manifest"; then
-              # File was removed, touch parent directory
-              dir_path="$(dirname "$file")"
-              if [ -d "$dir_path" ]; then
-                touch -m "$dir_path"
-                deleted_count=$((deleted_count + 1))
-                
-                echo "File removed: $file (touched directory)"
-              fi
-            fi
-          done < "$reference_manifest"
-          
-          echo "Processed $changed_count changed/new files and $deleted_count removed files"
-          echo "Current:"
-          cat $curr_manifest
-          echo "Reference:"
-          cat $reference_manifest
+          echo "Processed $changed_count changed files"
         else
           echo "No cache hit from reference branch"
         fi
