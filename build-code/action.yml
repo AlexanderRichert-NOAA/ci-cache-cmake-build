@@ -54,7 +54,7 @@ runs:
         
         # Set the cache key based on reference branch's HEAD
         echo "REFERENCE_SHA=$REFERENCE_SHA" >> $GITHUB_ENV
-        echo "CACHE_KEY=${{ inputs.cache-key-prefix }}-${{ inputs.parent-org }}-$REFERENCE_SHA" >> $GITHUB_ENV
+        echo "CACHE_KEY=${{ inputs.cache-key-prefix }}-${{ inputs.reference-branch }}-$REFERENCE_SHA" >> $GITHUB_ENV
 
     - name: Restore build cache
       id: restore-cache
