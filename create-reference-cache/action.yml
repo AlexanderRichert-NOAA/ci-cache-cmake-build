@@ -50,4 +50,4 @@ runs:
         path: |
           build/
           reference-manifest.txt
-        key: ${{ inputs.cache-key-prefix }}-${{ github.ref_name }}-${{ git.sha }}
+        key: ${{ inputs.cache-key-prefix }}-${{ github.ref_name }}-${{ github.sha }}
