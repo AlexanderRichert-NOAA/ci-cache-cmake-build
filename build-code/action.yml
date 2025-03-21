@@ -97,7 +97,7 @@ runs:
         reference_manifest="${GITHUB_WORKSPACE}/reference-manifest.txt"
 
         # Init mod times in modified code to 1 Jan 1970:
-        find ${{ inputs.source-dir }} | xargs -I{} touch -t 197001010000 {}
+        find ${GITHUB_WORKSPACE}/${{ inputs.source-dir }} | xargs -I{} touch -t 197001010000 {}
         # Find changed files and update their timestamps
         curr_manifest="${GITHUB_WORKSPACE}/current-manifest.txt"
         while IFS='|' read -r file hash; do
