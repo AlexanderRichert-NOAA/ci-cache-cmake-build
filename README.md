@@ -30,6 +30,18 @@ jobs:
         config-args: -DOPENMP=OFF
 ```
 
+### cache-reference-build` inputs
+
+| Name | Description | Default | Required |
+| ---- | ----------- | ------- | -------- |
+| `source-dir` | Source code directory, relative to github.workspace (must be same as reference source dir name so CMake can use it) | `codedir` | No |
+| `build-dir` | CMake build directory, relative to github.workspace | `build` | No |
+| `config-args` | Additional config arguments (passed to initial CMake invocation) | _empty string_ | No |
+| `build-args` | Additional build arguments (passed to build tool like make or ninja) | _empty string_ | No |
+| `cache-key-prefix` | Cache key prefix | `cmake-build-cache` | No |
+| `build-system` | Build "Unix Makefiles" or "Ninja" | `Ninja` | No |
+
+
 ## 2. Run `ci-cache-cmake-build` action in regular CI workflows in place of CMake build
 
 Using the custom action might look something like the following. Note that on a
@@ -63,3 +75,17 @@ jobs:
     - name: test
       run: ctest --test-dir build --output-on-failure
 ```
+
+### `build-code` inputs
+
+| Name | Description | Default | Required |
+| ---- | ----------- | ------- | -------- |
+| `source-dir` | Source code directory, relative to github.workspace | `.` | No |
+| `build-dir` | CMake build directory, relative to github.workspace | `build` | No |
+| `cache-key-prefix` | Cache key prefix | `cmake-build-cache` | No |
+| `config-args` | Additional config arguments (passed to initial CMake invocation) | _empty string_ | No |
+| `build-args` | Additional build arguments (passed to build tool like make or ninja) | _empty string_ | No |
+| `force-reconfigure` | Force CMake reconfiguration even if cache exists | `false` | No |
+| `parent-org` | GitHub org with reference repo/branch | `NOAA-EMC` | No |
+| `reference-branch` | Name of reference branch | `develop` | No |
+| `build-system` | Build "Unix Makefiles" or "Ninja" | `Ninja` | No |
