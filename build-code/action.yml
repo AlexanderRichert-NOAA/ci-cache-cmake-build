@@ -3,11 +3,11 @@ description: 'Restore cached CMake build directory (populated separately) and op
 
 inputs:
   source-dir:
-    description: 'Source code directory'
+    description: 'Source code directory, relative to github.workspace'
     required: false
     default: '.'
   build-dir:
-    description: 'CMake build directory'
+    description: 'CMake build directory, relative to github.workspace'
     required: false
     default: 'build'
   cache-key-prefix:
