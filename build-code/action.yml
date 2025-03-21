@@ -104,7 +104,7 @@ runs:
           # Check if file exists with same hash in previous manifest
           if ! grep -q "^$file|$hash$" "$reference_manifest"; then
             # Update file's modification time to trigger rebuild
-            touch -m "${{ inputs.source-dir }}/$file"
+            touch -m "${GITHUB_WORKSPACE}/${{ inputs.source-dir }}/$file"
             echo "Found modified file (updated timestamp): $file"
           fi
         done < "$curr_manifest"
