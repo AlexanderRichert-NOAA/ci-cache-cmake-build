@@ -1,0 +1,49 @@
+name: 'create-reference-cache'
+description: 'Create reference copy of code'
+author: 'Alex Richert'
+
+inputs:
+  source-dir:
+    description: 'Source code directory, relative to github.workspace'
+    required: false
+    default: '.'
+  build-dir:
+    description: 'CMake build directory, relative to github.workspace'
+    required: false
+    default: 'build'
+  config-args:
+    description: 'Additional config arguments (passed to initial CMake invocation)'
+    required: false
+    default: ''
+  build-args:
+    description: 'Additional build arguments (passed to build tool like make or ninja)'
+    required: false
+    default: ''
+  cache-key-prefix:
+    description: 'Cache key prefix'
+    required: false
+    default: 'cmake-build-cache'
+
+    - name: Generate reference build
+      shell: bash
+      run: |
+        cmake -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
+        cmake --build ${{ inputs.build-dir }} --parallel 2
+        cd ${{ inputs.source-dir }}
+        git ls-files | while read -r file; do
+          # Skip files in the build directory
+          if [[ -f "$file" ]]; then
+            # Calculate file hash
+            file_hash=$(git hash-object "$file")
+            # Store in manifest with pipe separator
+            echo "$file|$file_hash" >> reference-manifest.txt
+          fi
+        done
+
+    - name: Cache save
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          build/
+          reference-manifest.txt
+        key: ${{ inputs.cache-key-prefix }}-${{ github.ref_name }}-${{ git.sha }}
