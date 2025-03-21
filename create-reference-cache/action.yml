@@ -6,7 +6,7 @@ inputs:
   source-dir:
     description: 'Source code directory, relative to github.workspace'
     required: false
-    default: '.'
+    default: 'codedir'
   build-dir:
     description: 'CMake build directory, relative to github.workspace'
     required: false
@@ -23,6 +23,10 @@ inputs:
     description: 'Cache key prefix'
     required: false
     default: 'cmake-build-cache'
+
+runs:
+  using: "composite"
+  steps:
 
     - name: Generate reference build
       shell: bash
