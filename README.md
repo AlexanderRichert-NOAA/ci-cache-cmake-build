@@ -1,5 +1,16 @@
 # ci-cache-cmake-build
 
+This repository provides custom GitHub actions for caching CMake builds in
+order to speed up future rebuilds in, say, workflows triggered by pull
+requests.
+
+The `cache-reference-build` action, described in detail below, builds the CMake
+project for the repository's authoritative branch (e.g., develop) and caches
+the build directory. The `build-code` then uses that cached build directory as
+a starting point so that only modified files/targets need to be rebuilt. If no
+corresponding cache entry exists for the authoritative repository's develop
+branch, `build-code` will build the code normally, i.e., from scratch.
+
 ## 1. Run `cache-reference-build` on develop branch commit
 
 Create a workflow called, say, cache-reference-build.yml, which will look
@@ -42,7 +53,7 @@ jobs:
 | `build-system` | Build "Unix Makefiles" or "Ninja" | `Ninja` | No |
 
 
-## 2. Run `ci-cache-cmake-build` action in regular CI workflows in place of CMake build
+## 2. Run `build-code` action in regular CI workflows in place of CMake build
 
 Using the custom action might look something like the following. Note that on a
 cache miss, it will behave normally, i.e., rebuild from scratch, without
