@@ -23,7 +23,7 @@ jobs:
         path: codedir
 
     - name: Generate reference build
-      uses: AlexanderRichert-NOAA/ci-cache-cmake-build/create-reference-cache@main
+      uses: AlexanderRichert-NOAA/ci-cache-cmake-build/cache-reference-build@main
       with:
         source-dir: codedir
         build-dir: build
