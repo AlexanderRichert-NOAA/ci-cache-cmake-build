@@ -38,7 +38,7 @@ runs:
       shell: bash
       run: |
         cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
-        cmake --build ${{ inputs.build-dir }} --parallel 2
+        cmake --build ${{ inputs.build-dir }} --parallel 2 --verbose
         cd ${{ inputs.source-dir }}
         git ls-files | while read -r file; do
           # Skip files in the build directory
