@@ -1,6 +1,6 @@
 # ci-cache-cmake-build
 
-## 1. Create workflow to create reference build for each develop branch commit
+## 1. Run `cache-reference-build` on develop branch commit
 
 Create a workflow called, say, cache-reference-build.yml, which will look
 something like the following, and will run whenever a commit is merged into
@@ -30,7 +30,7 @@ jobs:
         config-args: -DOPENMP=OFF
 ```
 
-## 2. Add ci-cache-cmake-build action to regular CI workflows in place of CMake build
+## 2. Run `ci-cache-cmake-build` action in regular CI workflows in place of CMake build
 
 Using the custom action might look something like the following. Note that on a
 cache miss, it will behave normally, i.e., rebuild from scratch, without
