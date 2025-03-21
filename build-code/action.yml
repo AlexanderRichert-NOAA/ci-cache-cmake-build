@@ -14,7 +14,7 @@ inputs:
     description: 'Cache key prefix'
     required: false
     default: 'cmake-build-cache'
-  build-args:
+  config-args:
     description: 'Additional config arguments (passed to initial CMake invocation)'
     required: false
     default: ''
