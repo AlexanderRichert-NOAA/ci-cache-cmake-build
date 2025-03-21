@@ -4,7 +4,7 @@ author: 'Alex Richert'
 
 inputs:
   source-dir:
-    description: 'Source code directory, relative to github.workspace'
+    description: 'Source code directory, relative to github.workspace (must be same as reference source dir name so CMake can use it)'
     required: false
     default: 'codedir'
   build-dir:
