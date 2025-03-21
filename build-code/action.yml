@@ -34,6 +34,12 @@ inputs:
     description: 'Name of reference branch'
     required: false
     default: 'develop'
+  build-system:
+    description: 'Build "Unix Makefiles" or "Ninja"'
+    choice:
+    - "Unix Makefiles"
+    - "Ninja"
+    default: "Ninja"
 
 runs:
   using: "composite"
@@ -120,6 +126,6 @@ runs:
       shell: bash
       run: |
         echo "Building with CMake using restored cache..."
-        cmake -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
+        cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
         cmake --build ${{ inputs.build-dir }} --verbose ${{ inputs.build-args }}
         echo "Build completed successfully"

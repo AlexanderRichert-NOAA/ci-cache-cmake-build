@@ -23,6 +23,12 @@ inputs:
     description: 'Cache key prefix'
     required: false
     default: 'cmake-build-cache'
+  build-system:
+    description: 'Build "Unix Makefiles" or "Ninja"'
+    choice:
+    - "Unix Makefiles"
+    - "Ninja"
+    default: "Ninja" 
 
 runs:
   using: "composite"
@@ -31,7 +37,7 @@ runs:
     - name: Generate reference build
       shell: bash
       run: |
-        cmake -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
+        cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
         cmake --build ${{ inputs.build-dir }} --parallel 2
         cd ${{ inputs.source-dir }}
         git ls-files | while read -r file; do
