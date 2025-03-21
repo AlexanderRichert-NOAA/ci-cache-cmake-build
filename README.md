@@ -27,6 +27,7 @@ jobs:
       with:
         source-dir: codedir
         build-dir: build
+        config-args: -DOPENMP=OFF
 ```
 
 ## 2. Add ci-cache-cmake-build action to regular CI workflows in place of CMake build
