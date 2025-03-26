@@ -126,6 +126,6 @@ runs:
       shell: bash
       run: |
         echo "Building with CMake using restored cache..."
-        cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
+        #cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
         cmake --build ${{ inputs.build-dir }} --parallel 2 --verbose ${{ inputs.build-args }}
         echo "Build completed successfully"
