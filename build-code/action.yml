@@ -86,7 +86,7 @@ runs:
 
         # Get all git-tracked files and calculate their hashes
         cd ${{ inputs.source-dir }}
-        git ls-files | while read -r file; do
+        git ls-files --recurse-submodules | while read -r file; do
           # Skip files in the build directory
           if [[ "$file" != "${{ inputs.build-dir }}/"* && -f "$file" ]]; then
             # Calculate file hash
