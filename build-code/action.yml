@@ -126,8 +126,6 @@ runs:
       shell: bash
       run: |
         echo "Building with CMake using restored cache..."
-        if [ "${{ inputs.force-reconfiguration == 'true' || steps.restore-cache.outputs.cache-hit != 'true' }}" == 'true' ]; then
-            cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
-        fi
+        cmake -G "${{ inputs.build-system }}" -S ${{ inputs.source-dir }} -B ${{ inputs.build-dir }} ${{ inputs.config-args }}
         cmake --build ${{ inputs.build-dir }} --parallel 2 --verbose ${{ inputs.build-args }}
         echo "Build completed successfully"
