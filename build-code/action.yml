@@ -115,6 +115,9 @@ runs:
           fi
         done < "$curr_manifest"
 
+        # Delete Fortran module files:
+        find ${GITHUB_WORKSPACE}/${{ inputs.build-dir }} -name '*.mod' | xargs rm
+
     - name: Report cache miss
       if: steps.restore-cache.outputs.cache-hit != 'true'
       shell: bash
